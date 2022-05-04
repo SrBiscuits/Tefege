@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9661fc678944814291eb1c6d60fd441, type: 3}
+  m_Name: Server_Objects
+  m_EditorClassIdentifier: 
+  Objects:
+  - Name: Bullet
+    Prefab: {fileID: 6353263484677975966, guid: bfef48959baf7f44e9188972cc08889b,
+      type: 3}
+  - Name: Zombie_AI
+    Prefab: {fileID: 1410125483195203471, guid: 321051de640c6a443890643fe51a165d,
+      type: 3}
+  - Name: MaxAmmo
+    Prefab: {fileID: 2187615017018320134, guid: ed7ae1b5c27d69d4c86c4fdc0993c8aa,
+      type: 3}
