@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 //Data container de objetos
-
 namespace Project.Scriptable
 {
     [CreateAssetMenu(fileName ="Server_Objects",menuName="Scriptable Objects/Server Objects",order=3)]

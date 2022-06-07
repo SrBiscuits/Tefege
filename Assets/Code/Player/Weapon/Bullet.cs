@@ -1,3 +1,4 @@
+using Project.Managers;
 using Project.Networking;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,8 +10,6 @@ namespace Project.Gameplay
     {
         [SerializeField]
         private NetworkIdentity m_NetworkIdentity;
-        [SerializeField]
-        private WhoActivatedMe m_WhoActivatedMe;
 
         public float m_MaxDistance;
         public LayerMask m_ShootLayerMask;
@@ -24,6 +23,17 @@ namespace Project.Gameplay
         public float m_ForceCall = 0.16f;
         private float m_CurrentForceCall = 0;
 
+        public AudioSource m_AudioSource;
+        public AudioClip m_ShootSound;
+
+        private void Start()
+        {
+            /*
+                m_AudioSource.clip = m_ShootSound;
+                m_AudioSource.time = 0.05f;
+                m_AudioSource.Play();
+            */
+        }
         private void OnEnable()
         {
             m_CurrentCounter = m_Counter;
@@ -48,42 +58,45 @@ namespace Project.Gameplay
             m_CurrentForceCall -= Time.deltaTime;
 
             RaycastHit l_RaycastHit;
-            if (Physics.Raycast(transform.position, transform.forward, out l_RaycastHit, m_MaxDistance, m_ShootLayerMask.value))
+            if (GameController.GetGameController().GetHost())
             {
-                if (l_RaycastHit.collider.gameObject.tag == "ZombieHead")
+                if (Physics.Raycast(transform.position, transform.forward, out l_RaycastHit, m_MaxDistance, m_ShootLayerMask.value))
                 {
-                    //ZombieManager l_Zombie = l_RaycastHit.collider.gameObject.GetComponent<ZombieManager>();
-                    //l_Zombie.HitByBullet(44);
-                    Collision(l_RaycastHit.collider.gameObject,m_HeadDamage);
-                }
-                if (l_RaycastHit.collider.gameObject.tag == "ZombieBody")
-                {
-                    //ZombieManager l_Zombie = l_RaycastHit.collider.gameObject.GetComponent<ZombieManager>();
-                    //l_Zombie.HitByBullet(44);
-                    Collision(l_RaycastHit.collider.gameObject,m_NoHeadDamage);
-                }
-                else
-                {
-                    Collision(l_RaycastHit.collider.gameObject,0);
-                }
-            }
-            m_CurrentCounter -= Time.deltaTime;
-            if (m_CurrentCounter <= 0)
-            {
-                if (m_CurrentForceCall <= 0)
-                {
-                    m_NetworkIdentity.GetSocket().Emit("collisionDestroy", new JSONObject(JsonUtility.ToJson(new IDData()
+                    if (l_RaycastHit.collider.gameObject.tag == "ZombieHead")
                     {
-                        id = m_NetworkIdentity.GetID(),
-                        zombieID = m_NetworkIdentity.GetID(),
-                        damage = 0,
-                        x = 0,
-                        y = 0,
-                        z = 0
-                    })));
-                    m_CurrentForceCall = m_ForceCall;
+                        //ZombieManager l_Zombie = l_RaycastHit.collider.gameObject.GetComponent<ZombieManager>();
+                        //l_Zombie.HitByBullet(44);
+                        Collision(l_RaycastHit.collider.gameObject, m_HeadDamage*GameController.GetGameController().GetInstaKIll());
+                    }
+                    if (l_RaycastHit.collider.gameObject.tag == "ZombieBody")
+                    {
+                        //ZombieManager l_Zombie = l_RaycastHit.collider.gameObject.GetComponent<ZombieManager>();
+                        //l_Zombie.HitByBullet(44);
+                        Collision(l_RaycastHit.collider.gameObject, m_NoHeadDamage*GameController.GetGameController().GetInstaKIll());
+                    }
+                    else
+                    {
+                        Collision(l_RaycastHit.collider.gameObject, 0);
+                    }
                 }
-            }
+                m_CurrentCounter -= Time.deltaTime;
+                if (m_CurrentCounter <= 0)
+                {
+                    if (m_CurrentForceCall <= 0)
+                    {
+                        m_NetworkIdentity.GetSocket().Emit("collisionDestroy", new JSONObject(JsonUtility.ToJson(new IDData()
+                        {
+                            id = m_NetworkIdentity.GetID(),
+                            zombieID = m_NetworkIdentity.GetID(),
+                            damage = 0,
+                            x = 0,
+                            y = 0,
+                            z = 0
+                        })));
+                        m_CurrentForceCall = m_ForceCall;
+                    }
+                }
+            }        
         }
 
         public void Collision(GameObject collision,float Damage)

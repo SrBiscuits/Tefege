@@ -2,27 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DestroyOnTime : MonoBehaviour
+namespace Project.Utility
 {
-    //Destroy any object in a determined time
+    public class DestroyOnTime : MonoBehaviour
+    {
+        [Header("Time")]
+        public float m_DestroyOnTime = 3.0f;
     
-    [Header("Time")]
+        void Start()
+        {
+            StartCoroutine(DestroyOnTimeFn());
+        }
 
-    public float m_DestroyOnTime = 3.0f;
-    
-    void Start()
-    {
-        StartCoroutine(DestroyOnTimeFn());
-    }
-
-    void Update()
-    {
-        StartCoroutine(DestroyOnTimeFn());
-    }
-
-    public IEnumerator DestroyOnTimeFn()
-    {
-        yield return new WaitForSeconds(m_DestroyOnTime);
-        gameObject.SetActive(false);
+        public IEnumerator DestroyOnTimeFn()
+        {
+            yield return new WaitForSeconds(m_DestroyOnTime);
+            Destroy(this.gameObject);
+        }
     }
 }

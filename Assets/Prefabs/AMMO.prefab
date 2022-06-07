@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6883054629961490641}
   - component: {fileID: 4944301555478573617}
+  - component: {fileID: 6977999585949866998}
   m_Layer: 0
   m_Name: AMMO
   m_TagString: Untagged
@@ -26,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 2187615017018320134}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.6564, y: 1.6564, z: 1.6564}
+  m_LocalScale: {x: 1.3570719, y: 1.3570719, z: 1.3570719}
   m_Children:
   - {fileID: 8683496406262819315}
   m_Father: {fileID: 0}
@@ -46,6 +47,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Id: 
   m_IsControlling: 0
+--- !u!114 &6977999585949866998
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2187615017018320134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2deeb5b218eeb76439c3b89037af2ec6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Item: {fileID: 8343526708818572105}
+  m_RotateVelocityX: 0
+  m_RotateVelocityY: 100
+  m_RotateVelocityZ: 0
 --- !u!1001 &9154481603526807064
 PrefabInstance:
   m_ObjectHideFlags: 0

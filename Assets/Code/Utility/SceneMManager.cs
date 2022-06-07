@@ -9,7 +9,6 @@ namespace Project.Utility
 {
     public class SceneMManager : Singleton<SceneMManager>
     {
-
         private List<LevelLoadingData> m_LevelsLoading;
         private List<string> m_CurrentlyLoadedScenes;
 
@@ -29,18 +28,16 @@ namespace Project.Utility
                     continue;
                 }
 
-                if (m_LevelsLoading[i].m_AsyncOperayion.isDone)
+                if (m_LevelsLoading[i].m_AsyncOperation.isDone)
                 {
-                    m_LevelsLoading[i].m_AsyncOperayion.allowSceneActivation = true; //Needed to make sure the scene while fully loaded gets turned on for the player
+                    m_LevelsLoading[i].m_AsyncOperation.allowSceneActivation = true;
                     m_LevelsLoading[i].m_OnLevelLoaded.Invoke(m_LevelsLoading[i].m_SceneName);
                     m_CurrentlyLoadedScenes.Add(m_LevelsLoading[i].m_SceneName);
                     m_LevelsLoading.RemoveAt(i);
-                    //Hide your loading screen here
-                    //ApplicationManager.Instance.HideLoadingScreen();
                 }
             }
         }
-        public void LoadLevel(string LevelName, Action<string> OnLevelLoaded, bool IsShowingLoadingScreen = false)
+        public void LoadLevel(string LevelName, Action<string> OnLevelLoaded)
         {
             bool value = m_CurrentlyLoadedScenes.Any(x => x == LevelName);
 
@@ -51,16 +48,10 @@ namespace Project.Utility
             }
 
             LevelLoadingData m_LevelLoadingData = new LevelLoadingData();
-            m_LevelLoadingData.m_AsyncOperayion = SceneManager.LoadSceneAsync(LevelName, LoadSceneMode.Additive);
+            m_LevelLoadingData.m_AsyncOperation = SceneManager.LoadSceneAsync(LevelName, LoadSceneMode.Additive);
             m_LevelLoadingData.m_SceneName = LevelName;
             m_LevelLoadingData.m_OnLevelLoaded = OnLevelLoaded;
             m_LevelsLoading.Add(m_LevelLoadingData);
-
-            if (IsShowingLoadingScreen)
-            {
-                //Turn on your loading screen here
-                //ApplicationManager.Instance.ShowLoadingScreen();
-            }
         }
 
         public void UnLoadLevel(string LevelName)
@@ -75,20 +66,21 @@ namespace Project.Utility
                 }
             }
 
-            Debug.LogErrorFormat("Failed to unload level ({0}), most likely was never loaded to begin with or was already unloaded.", LevelName);
+            Debug.LogErrorFormat("Failed to unload level ("+LevelName+")");
         }
     }
 
     [Serializable]
     public class LevelLoadingData
     {
-        public AsyncOperation m_AsyncOperayion;
+        public AsyncOperation m_AsyncOperation;
         public string m_SceneName;
         public Action<string> m_OnLevelLoaded;
     }
 
     public static class SceneList
     {
+        public const string INTRO = "Intro";
         public const string MAIN_MENU = "MainMenu";
         public const string LEVEL = "Level";
         public const string ONLINE = "Online";

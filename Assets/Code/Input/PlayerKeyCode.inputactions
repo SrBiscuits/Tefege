@@ -16,12 +16,12 @@
                 },
                 {
                     "name": "Camera",
-                    "type": "PassThrough",
+                    "type": "Value",
                     "id": "2a9ce780-9fd7-49de-ba30-d572357e3111",
-                    "expectedControlType": "",
+                    "expectedControlType": "Vector2",
                     "processors": "",
                     "interactions": "",
-                    "initialStateCheck": false
+                    "initialStateCheck": true
                 },
                 {
                     "name": "Fire",
@@ -54,6 +54,15 @@
                     "name": "Run",
                     "type": "Button",
                     "id": "e696dfff-47fe-43ef-a7b6-da4aea4deb01",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Esc",
+                    "type": "Button",
+                    "id": "e5c5310e-79ed-4031-8e07-b00667172a66",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -118,8 +127,30 @@
                 },
                 {
                     "name": "",
+                    "id": "8a920f40-58bc-4761-a668-c8af3a543f81",
+                    "path": "<Gamepad>/leftStick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Movement",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "a1dfa5f7-096d-470f-9085-bcedc30e6b2d",
                     "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Camera",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4559408c-5e06-4d8d-a398-9bf085fae969",
+                    "path": "<Gamepad>/rightStick",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -168,6 +199,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Run",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a57e6e5a-1679-472b-999a-2de598176d32",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Esc",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -1,13 +1,17 @@
+using Project.Managers;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ZombieSpawnPoints : MonoBehaviour
+namespace Project.Gameplay
 {
-    public List<Transform> m_SpawnPoints;
-
-    private void Awake()
+    public class ZombieSpawnPoints : MonoBehaviour
     {
-        GameController.GetGameController().SetAllZombieSpawnTransform(m_SpawnPoints);
+        public List<Transform> m_SpawnPoints;
+
+        private void Awake()
+        {
+            GameController.GetGameController().SetAllZombieSpawnTransform(m_SpawnPoints);
+        }
     }
 }

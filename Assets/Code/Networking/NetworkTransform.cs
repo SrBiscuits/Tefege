@@ -33,7 +33,7 @@ namespace Project.Networking
                 enabled = false;
             }
         }
-        private void Update()
+        private void FixedUpdate()
         {
             if (m_NetworkIdentity.IsControlling())
             {
@@ -54,6 +54,10 @@ namespace Project.Networking
                     }
                 }                
             } 
+        }
+        public void ResetPosition()
+        {
+            transform.position = new Vector3(0, 0, 0);
         }
         private void SendDataPosition()
         {

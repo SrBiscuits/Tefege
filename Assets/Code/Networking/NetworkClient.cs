@@ -8,6 +8,10 @@ using Project.Scriptable;
 using Project.Gameplay;
 using Project.AI;
 using UnityEngine.Events;
+using System.Globalization;
+using UnityEngine.SceneManagement;
+using Project.Sound;
+using Project.Managers;
 
 namespace Project.Networking
 {
@@ -34,16 +38,14 @@ namespace Project.Networking
 
         List<PlayerManager> m_Players = new List<PlayerManager>();
 
-        //ws://127.0.0.1:52300/socket.io/?EIO=3&transport=websocket
-        //ws://tfgzombieswebsocket.herokuapp.com:80/socket.io/?EIO=3&transport=websocket
+        //LAN ws://127.0.0.1:52300/socket.io/?EIO=3&transport=websocket
+        //WAN ws://tfgzombieswebsocket.herokuapp.com:80/socket.io/?EIO=3&transport=websocket
 
-        //La puedes coger de donde quieras pero solo se cambia desde aquí
         public static string ClientID { get; private set; }
-
         private Dictionary<string, NetworkIdentity> m_ServerObjects;
-
+        
         public override void Start() {
-            //CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
+            CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
             base.Start();
             Initialize();
             SetupEvents();
@@ -58,7 +60,6 @@ namespace Project.Networking
         {
             m_ServerObjects = new Dictionary<string, NetworkIdentity>();
         }
-
         //Eventos llamados por server.js
         private void SetupEvents()
         {
@@ -91,6 +92,8 @@ namespace Project.Networking
                 l_NetworkIdentity.SetControllerID(l_Id);
                 l_NetworkIdentity.SetSocketReference(this);
                 m_ServerObjects.Add(l_Id, l_NetworkIdentity);
+                l_NetworkIdentity.GetComponent<NetworkTransform>().ResetPosition();
+                GameController.GetGameController().StartGame();
             });
             On("Otherspawn", (E) =>
             {
@@ -111,13 +114,23 @@ namespace Project.Networking
                 GameObject l_Client = m_ServerObjects[l_Id].gameObject;
                 GameController.GetGameController().AddOrRemovePlayer(l_Client.transform, false);
                 GameController.GetGameController().AddOrRemovePlayerID(l_Id, false);
-
+                foreach (KeyValuePair<string, NetworkIdentity> Zombie in m_ServerObjects)
+                {
+                    if (Zombie.Value.GetComponent<ZombieManager>() != null)
+                    {
+                        Zombie.Value.GetComponent<ZombieManager>().OnePlayerDied();
+                    }
+                }
                 Destroy(l_Client);
                 m_ServerObjects.Remove(l_Id);
             });
             On("host", (E) =>
             {
-                GameController.GetGameController().SetHost();
+                GameController.GetGameController().SetHost(true);
+            });
+            On("disablehost", (E) =>
+            {
+                GameController.GetGameController().SetHost(false);
             });
             On("updatePosition", (E) =>
             {            
@@ -152,6 +165,49 @@ namespace Project.Networking
                 l_NetworkIdentity.transform.localEulerAngles = new Vector3(0, l_PlayerRotation, 0);
                 l_NetworkIdentity.GetComponent<PlayerManager>().SetRotation(l_GunRotation, l_PlayerRotation);
             });
+            On("animationNumber", (E) =>
+            {
+                string l_Id = E.data["id"].ToString().RemoveQuotes();
+                NetworkIdentity l_NetworkIdentity = m_ServerObjects[l_Id];
+                if(l_NetworkIdentity.GetComponent<OtherPlayerAnimator>()!=null)
+                {
+                    OtherPlayerAnimator l_Player = l_NetworkIdentity.GetComponent<OtherPlayerAnimator>();
+                    float l_Number = E.data["animation"].f;
+                    switch (l_Number)
+                    {
+                        case 1:
+                            l_Player.Aim();
+                            break;
+                        case 2:
+                            l_Player.Run();
+                            break;
+                        case 3:
+                            l_Player.Shoot();
+                            break;
+                        case 4:
+                            l_Player.Reload();
+                            break;
+                        case 5:
+                            l_Player.StopAim();
+                            break;
+                        case 6:
+                            l_Player.StopRun();
+                            break;
+                    }
+                }
+            });
+            On("animationDirection", (E) =>
+            {
+                string l_Id = E.data["id"].ToString().RemoveQuotes();
+                NetworkIdentity l_NetworkIdentity = m_ServerObjects[l_Id];
+                if (l_NetworkIdentity.GetComponent<OtherPlayerAnimator>() != null)
+                {
+                    float l_X = E.data["X"].f;
+                    float l_Z = E.data["Z"].f;
+                    l_NetworkIdentity.GetComponent<OtherPlayerAnimator>().Movement(l_X, l_Z);
+                }
+
+            });
             On("updateZombieRotation", (E) =>
             {
                 string l_Id = E.data["id"].ToString().RemoveQuotes();
@@ -167,7 +223,13 @@ namespace Project.Networking
                 float x = E.data["position"]["x"].f;
                 float y = 0;               
                 if (E.data["name"].str == "MaxAmmo")
-                    y = E.data["position"]["y"].f+0.3f;
+                    y = E.data["position"]["y"].f+0.2f;
+                else if (E.data["name"].str == "Kaboom")
+                    y = E.data["position"]["y"].f + 0.4f;
+                else if (E.data["name"].str == "InstaKill")
+                    y = E.data["position"]["y"].f + 0.2f;
+                else if (E.data["name"].str == "Health")
+                    y = E.data["position"]["y"].f + 0.3f;
                 else
                     y = E.data["position"]["y"].f;
                 float z = E.data["position"]["z"].f;
@@ -176,34 +238,29 @@ namespace Project.Networking
                     ServerObjectsData l_ServerObjectData = m_ServerSpawnObjects.GetObjectByName(name);
                     var l_SpawnedObject = Instantiate(l_ServerObjectData.Prefab, m_NetworkContainer);
 
-                    if (E.data["name"].str == "Zombie_AI")
+                    if (E.data["name"].str == "Zombie_AI")               
                         l_SpawnedObject.transform.position = GameController.GetGameController().GetSpawn().position;
                     else
-                        l_SpawnedObject.transform.position = new Vector3(x, y, z);
-                    var l_NetworkIdentity = l_SpawnedObject.GetComponent<NetworkIdentity>();
+                        l_SpawnedObject.transform.position = new Vector3(x, y, z);                   
 
+                    var l_NetworkIdentity = l_SpawnedObject.GetComponent<NetworkIdentity>();
                     l_NetworkIdentity.SetControllerID(l_Id);
                     l_NetworkIdentity.SetSocketReference(this);
 
-                    //If bullet apply direction as well
+                    //Si es bullet, aplicar direccion
                     if (name == "Bullet")
                     {
                         float directionX = E.data["direction"]["x"].f;
                         float directionY = E.data["direction"]["y"].f;
                         float directionZ = E.data["direction"]["z"].f;
-                        string activator = E.data["activator"].ToString().RemoveQuotes();
                         float speed = E.data["speed"].f;
                         Vector3 l_CurrentRotation = new Vector3(directionX, directionY, directionZ);
                         l_SpawnedObject.transform.rotation = Quaternion.Euler(l_CurrentRotation);
-
-                        WhoActivatedMe l_WhoActivatedMe = l_SpawnedObject.GetComponent<WhoActivatedMe>();
-                        l_WhoActivatedMe.SetActivator(activator);
 
                         Bullet projectile = l_SpawnedObject.GetComponent<Bullet>();
                         projectile.Direction = new Vector3(directionX, directionY, directionZ);
                         projectile.Speed = speed;
                     }
-
                     m_ServerObjects.Add(l_Id, l_NetworkIdentity);
                 }
             });
@@ -227,30 +284,116 @@ namespace Project.Networking
                 }
                 else
                 {
-                    l_NetworkIdentity.gameObject.SetActive(false);
-                }              
+                    if (l_NetworkIdentity.GetComponent<NetworkIdentity>().IsControlling())
+                    {
+                        l_NetworkIdentity.GetComponent<PlayerManager>().DeadAnimation();
+                    }
+                    else
+                    {
+                        l_NetworkIdentity.GetComponent<OtherPlayerAnimator>().DeadAnimation();
+                    }
+                    GameObject l_Client = m_ServerObjects[l_Id].gameObject;
+                    GameController.GetGameController().AddOrRemovePlayer(l_Client.transform, false);
+                    GameController.GetGameController().AddOrRemovePlayerID(l_Id, false);
+                    foreach (KeyValuePair<string, NetworkIdentity> Zombie in m_ServerObjects)
+                    {
+                        if (Zombie.Value.GetComponent<ZombieManager>() != null)
+                        {
+                            Zombie.Value.GetComponent<ZombieManager>().OnePlayerDied();
+                        }
+                    }
+                }         
             });
             On("playerRespawn", (E) => {
-                Debug.Log("respawn");
                 string l_Id = E.data["id"].ToString().RemoveQuotes();
-                //float x = float.Parse(E.data["position"]["x"].str);
-                //float y = float.Parse(E.data["position"]["y"].str);
-                //float z = float.Parse(E.data["position"]["z"].str);
                 NetworkIdentity l_NetworkIdentity = m_ServerObjects[l_Id];
-                //l_NetworkIdentity.transform.position = new Vector3(x, y, z);
-                ZombieManager l_Zombie = l_NetworkIdentity.gameObject.GetComponent<ZombieManager>();
-                l_Zombie.gameObject.SetActive(true);
-                l_Zombie.Respawn();
+                if (E.data["username"].str != null && E.data["username"].str == "Zombie_AI")
+                {
+                    ZombieManager l_Zombie = l_NetworkIdentity.gameObject.GetComponent<ZombieManager>();
+                    l_Zombie.gameObject.SetActive(true);
+                    l_Zombie.Respawn();
+                }
+                else
+                {
+                    float x = E.data["position"]["x"].f;
+                    float y = E.data["position"]["y"].f;
+                    float z = E.data["position"]["z"].f;
+                    l_NetworkIdentity.transform.position = new Vector3(x, y, z);
+                    Debug.Log("Player respawn");
+                    if (l_NetworkIdentity.GetComponent<NetworkIdentity>().IsControlling())
+                    {
+                        l_NetworkIdentity.GetComponent<PlayerManager>().DisableDeadPlayerCamera();
+                    }
+                    else
+                    {
+                        l_NetworkIdentity.GetComponent<OtherPlayerAnimator>().EnablePlayer();
+                    }
+                    GameObject l_Client = m_ServerObjects[l_Id].gameObject;
+                    GameController.GetGameController().AddOrRemovePlayer(l_Client.transform, true);
+                    GameController.GetGameController().AddOrRemovePlayerID(l_Id, true);
+                }
             });
-            On("itemUsed", (E) =>{
+            On("itemUsed", (E) =>
+            {
                 string l_Id = E.data["id"].ToString().RemoveQuotes();
                 NetworkIdentity l_NetworkIdentity = m_ServerObjects[l_Id];
                 Debug.Log("using item: " + E.data["name"].str);
-                Debug.Log(E.data["name"].str == "MaxAmmo");
                 if (E.data["name"].str == "MaxAmmo")
-                {
-                    
+                {         
                     m_OnAmmoPick.Invoke(E);
+                }
+                else if (E.data["name"].str == "Kaboom")
+                {
+                    foreach (KeyValuePair<string, NetworkIdentity> Zombie in m_ServerObjects)
+                    {
+                        if (Zombie.Value.GetComponent<ZombieManager>() != null)
+                        {
+                            if (GameController.GetGameController().GetHost())
+                                Zombie.Value.GetComponent<ZombieManager>().SetDieState();
+                            else
+                                Zombie.Value.GetComponent<ZombieManager>().Die();
+                        }
+                    }
+                    foreach (KeyValuePair<string, NetworkIdentity> Player in m_ServerObjects)
+                    {
+                        if (Player.Value.GetComponent<PlayerSounds>() != null)
+                        {
+                            if (Player.Value.GetComponent<NetworkIdentity>().IsControlling())
+                                Player.Value.GetComponent<PlayerSounds>().Kaboom();
+                        }
+                    }
+                }
+                else if (E.data["name"].str == "InstaKill")
+                {
+                    GameController.GetGameController().SetInstaKill();
+                    GameController.GetGameController().SetInstaKill();
+                    foreach (KeyValuePair<string, NetworkIdentity> Player in m_ServerObjects)
+                    {
+                        if (Player.Value.GetComponentInChildren<PlayerCanvas>()!=null)
+                        {
+                            Player.Value.GetComponentInChildren<PlayerCanvas>().ActivateInstakill();
+                            if (Player.Value.GetComponent<NetworkIdentity>().IsControlling())
+                                Player.Value.GetComponent<PlayerSounds>().Instakill();
+                        }
+                        else if (Player.Value.GetComponentInChildren<MobilePlayerCanvas>() != null)
+                        {
+                            Player.Value.GetComponentInChildren<MobilePlayerCanvas>().ActivateInstakill();
+                            if (Player.Value.GetComponent<NetworkIdentity>().IsControlling())
+                                Player.Value.GetComponent<PlayerSounds>().Instakill();
+                        }
+                    }
+                }
+                else if (E.data["name"].str == "Health")
+                {
+                    foreach (KeyValuePair<string, NetworkIdentity> Player in m_ServerObjects)
+                    {
+                        if (Player.Value.GetComponent<Gun>() != null)
+                        {
+                            Player.Value.GetComponent<Gun>().Back2Live();
+                            if (Player.Value.GetComponent<NetworkIdentity>().IsControlling())
+                                Player.Value.GetComponent<PlayerSounds>().Heal();
+                        }
+                    }
                 }
                 m_ServerObjects.Remove(l_Id);
                 DestroyImmediate(l_NetworkIdentity.gameObject);
@@ -265,6 +408,32 @@ namespace Project.Networking
             On("lobbyUpdate", (E) =>
             {
                 m_OnStateGameChange.Invoke(E);
+            });
+            On("roundComplete", (E) =>
+            {
+                GameController.GetGameController().NextRound();
+                foreach (KeyValuePair<string, NetworkIdentity> Zombie in m_ServerObjects)
+                {
+                    if (Zombie.Value.GetComponent<Gun>() != null)
+                    {
+                        Zombie.Value.GetComponent<Gun>().NextRound();
+                    }
+                }
+            });
+            On("exitGame", (E) =>
+            {
+                /*
+                SceneMManager.Instance.LoadLevel(SceneList.INTRO, (l_LevelName) => {
+                    SceneMManager.Instance.UnLoadLevel(SceneList.LEVEL);
+                });
+                m_Players.Clear();
+                m_ServerObjects.Clear();
+                */
+                Emit("disconnect");
+                GameController.GetGameController().ExitGame();
+                SceneMManager.Instance.UnLoadLevel(SceneList.LEVEL);
+                SceneMManager.Instance.UnLoadLevel(SceneList.ONLINE);
+                SceneManager.LoadScene("Intro", LoadSceneMode.Single);
             });
         }
         public void AttemptToJoinLobby()
@@ -307,7 +476,6 @@ namespace Project.Networking
     public class BulletData
     {
         public string id;
-        public string activator;
         public Position position;
         public Position direction;
     }
@@ -325,5 +493,18 @@ namespace Project.Networking
     public class LobbyID
     {
         public string id;
+    }
+    [Serializable]
+    public class AnimatorNumber
+    {
+        public string id;
+        public float animation;
+    }
+    [Serializable]
+    public class AnimatorDirection
+    {
+        public string id;
+        public float X;
+        public float Z;
     }
 }

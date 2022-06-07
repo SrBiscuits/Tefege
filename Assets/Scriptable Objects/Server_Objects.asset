@@ -22,3 +22,12 @@ MonoBehaviour:
   - Name: MaxAmmo
     Prefab: {fileID: 2187615017018320134, guid: ed7ae1b5c27d69d4c86c4fdc0993c8aa,
       type: 3}
+  - Name: Kaboom
+    Prefab: {fileID: 5942009628385646243, guid: 78af5c8d467503e4da29ed1d8617e020,
+      type: 3}
+  - Name: Health
+    Prefab: {fileID: 4853448148316437544, guid: b42e27b0de47ebc40aa46a0862a66ca4,
+      type: 3}
+  - Name: InstaKill
+    Prefab: {fileID: 1580069233729346818, guid: 100fb67ed842cde4196136f549e7d97b,
+      type: 3}
